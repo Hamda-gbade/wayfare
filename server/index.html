@@ -157,7 +157,27 @@
   .v-unusable { color: var(--bad); font-weight: 600; }
   .v-poor { color: var(--warn); }
   .v-good, .v-fair { color: var(--ok); }
+  /* A verdict's mark is its channel when the colour is gone — greyscale,
+     forced-colors, or a reader who does not separate these four hues. It
+     travels inside the coloured cell, so one class still paints both, and
+     it is always set beside the word: the mark never carries a verdict on
+     its own. */
+  .v-mark {
+    display: inline-flex; align-items: center; gap: .28rem;
+    width: 1.1rem; height: 1.1rem; margin-right: .4rem;
+    font: 700 .74rem/1 var(--mono);
+    border: 1px solid currentColor; border-radius: 3px;
+  }
+  /* The mark and the grade it names stay on one line. At 320px the verdict
+     column is 86px wide and a mark plus a grade does not fit across it:
+     wrapped, the mark ends up alone on the line above, a line away from the
+     word it stands for. The table already scrolls sideways there. */
+  .v-cell { white-space: nowrap; }
   .scroll { overflow-x: auto; }
+  /* A horizontally scrolling table is only keyboard reachable if the region
+     itself takes focus; at 320px the verdict column sits off the right
+     edge, so without this the grade is mouse-only. */
+  .scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .finding-row { display: flex; gap: .7rem; align-items: baseline; padding: .5rem 0;
                  border-bottom: 1px solid var(--grid); }
   .finding-row:last-child { border-bottom: 0; }
@@ -194,12 +214,19 @@
     color: var(--brand-slate); background: var(--neutral-soft); white-space: nowrap;
     margin-right: .5rem;
   }
+  /* A metric is never good or bad, so it has no verdict colour; it still has
+     the same "could not determine" mark the UNKNOWN check carries, so the
+     two undetermined states read as one idea. */
+  .m-state::before { content: "?"; font-weight: 700; margin-right: .3rem; }
   .m-unknown { color: var(--brand-slate); }
   .meta { color: var(--muted); font-size: .82rem; margin-top: .9rem; }
   .err { color: var(--bad); }
+  /* A recorded reading is a dashed edge and a live one is solid, so "is this
+     current?" is legible from the shape of the banner before the words are
+     read — the two differ in more than hue. */
   .provenance { margin-bottom: .9rem; padding: .7rem .85rem; border-radius: 6px;
-                border: 1px solid var(--warn); color: var(--warn); background: color-mix(in srgb, var(--warn) 10%, transparent); }
-  .provenance-live { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+                border: 1px dashed var(--warn); color: var(--warn); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+  .provenance-live { border-color: var(--ok); border-style: solid; color: var(--ok); background: var(--ok-soft); }
   h2 { font-size: .95rem; margin: 0 0 .8rem; letter-spacing: .01em; }
   .legend-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .55rem; margin-top: .9rem; }
   .legend-item { display: flex; align-items: center; gap: .45rem; min-width: 0; }
@@ -221,8 +248,10 @@
   .axis { fill: var(--muted); font: 10px var(--mono); }
   .trend-legend { display: flex; gap: 1.1rem; margin-top: .4rem;
                   font: 550 .72rem/1 var(--mono); letter-spacing: .05em; color: var(--muted); }
-  .trend-legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px;
-                      margin-right: .35rem; vertical-align: -1px; }
+  /* The key draws the shapes the chart itself uses, so it explains a shape
+     rather than a hue. */
+  .trend-legend .sw { display: inline-block; width: 12px; height: 12px;
+                      margin-right: .35rem; vertical-align: -2px; }
   footer { color: var(--muted); font-size: .82rem; border-top: 1px solid var(--border); padding-top: 1.1rem; margin-top: 2rem; }
   code { font-family: var(--mono); font-size: .85em; }
 
@@ -361,6 +390,25 @@ function integrityCell(state, dependsOn = []) {
 }
 
 const verdictClass = (v) => 'v-' + String(v).toLowerCase();
+
+// The mark beside a verdict. Colour was the only thing separating GOOD from
+// POOR once the word was out of view, and a hue is exactly what a greyscale
+// print, a forced-colors mode and some readers remove. The mark is that
+// second channel: a shape per grade, always printed next to the word, so
+// neither one has to carry the verdict alone.
+//
+// The four keys are the four grades the engine publishes. Nothing else gets a
+// mark: an unrecognised verdict is rendered as the bare word the API sent,
+// with no colour and no mark, because dressing a grade this client has never
+// heard of would be inventing one.
+const VERDICT_MARKS = { GOOD: '✓', FAIR: '≈', POOR: '!', UNUSABLE: '✕' };
+
+const verdictMark = (v) => {
+  const m = VERDICT_MARKS[String(v).toUpperCase()];
+  // aria-hidden: the word beside it is what assistive tech should read, and
+  // announcing both would say the grade twice.
+  return m ? `<span class="v-mark" aria-hidden="true">${m}</span>` : '';
+};
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -503,7 +551,11 @@ function render(d) {
     parts.push(`<div class="panel"><h2>Loss against mid, by size</h2>${curve(priced)}</div>`);
   }
 
-  parts.push(`<div class="panel"><h2>Measurements</h2><div class="scroll">${table(d.rungs, d.scored, d.depends_on || [])}</div></div>`);
+  // The two tables are wider than a phone. The wrapper is focusable and named
+  // so a keyboard can reach the verdict column, which sits past the right
+  // edge at 320px; without that the grade is reachable by pointer only.
+  parts.push(`<div class="panel"><h2>Measurements</h2><div class="scroll" tabindex="0"
+    role="region" aria-label="Measurements by trade size">${table(d.rungs, d.scored, d.depends_on || [])}</div></div>`);
 
   if (d.scored) parts.push(legend());
 
@@ -542,7 +594,7 @@ function recommendationBlock(d) {
   const q = d.recommended;
   return `<div class="rec-some">Recommended at ${esc(d.recommended_size)}
     ${esc(d.send_asset.code)}: ${esc(q.description)} &mdash; ${formatPct(q.loss_pct)}%
-    below mid, graded ${esc(q.verdict)}.</div>`;
+    below mid, graded ${verdictMark(q.verdict)}${esc(q.verdict)}.</div>`;
 }
 
 // A log-x line chart. Loss is clamped to 0–100 so the shape of the curve, not
@@ -605,12 +657,16 @@ function table(rungs, scored, depends) {
     }
     const q = r.quote;
     if (scored) {
+      // The loss figure keeps its colour as a scanning aid, but the grade
+      // beside it is what the row asserts — the number is the engine's, the
+      // word and the mark are the verdict, and only the last two survive
+      // the loss of colour.
       return `<tr>
         <td class="num">${esc(r.send_amount)}</td>
         <td class="num">${esc(q.receive_amount)}</td>
         <td class="num">${esc(q.effective_rate)}</td>
         <td class="num ${verdictClass(q.verdict)}">${formatPct(q.loss_pct)}%</td>
-        <td class="${verdictClass(q.verdict)}">${esc(q.verdict)}</td>
+        <td class="${verdictClass(q.verdict)}"><span class="v-cell">${verdictMark(q.verdict)}${esc(q.verdict)}</span></td>
         <td>${esc(q.description)}</td>
       </tr>`;
     }
@@ -740,11 +796,14 @@ function legend() {
     <h2>Verdict thresholds</h2>
     <p>Loss is how far the achieved rate falls below the reference mid.</p>
     <p>
-      <span class="v-good" style="font-weight:600">GOOD</span> ≤ 3% &middot;
-      <span class="v-fair">FAIR</span> ≤ 8% &middot;
-      <span class="v-poor">POOR</span> ≤ 20% &middot;
-      <span class="v-unusable">UNUSABLE</span> &gt; 20%
+      <span class="v-good" style="font-weight:600">${verdictMark('GOOD')}GOOD</span> ≤ 3% &middot;
+      <span class="v-fair">${verdictMark('FAIR')}FAIR</span> ≤ 8% &middot;
+      <span class="v-poor">${verdictMark('POOR')}POOR</span> ≤ 20% &middot;
+      <span class="v-unusable">${verdictMark('UNUSABLE')}UNUSABLE</span> &gt; 20%
     </p>
+    <p>Each grade carries a mark as well as a colour, so the ladder still
+    reads in greyscale, in forced-colors, and to a reader who does not
+    separate these hues.</p>
     <div class="legend-grid" aria-label="Finding state legend">
       <div class="legend-item"><span class="f-state f-pass">PASS</span><span>Observed and clear</span></div>
       <div class="legend-item"><span class="f-state f-fail">FAIL</span><span>Observed concern</span></div>
@@ -875,7 +934,7 @@ function renderTrend() {
 
   parts.push(`<div class="panel">
     <h2>Stored runs</h2>
-    <div class="scroll">${runsTable(runs)}</div>
+    <div class="scroll" tabindex="0" role="region" aria-label="Stored runs, newest first">${runsTable(runs)}</div>
     <p class="meta">Newest first. The reference column names the provider each
     run was scored against, so a benchmark change sits next to the numbers it
     affects.</p></div>`);
@@ -974,6 +1033,34 @@ function trendChart(d, size) {
   const dotFill = (i) =>
     i === 'DERIVATIVE' ? 'var(--warn)' : i === 'NO-MARKET' ? 'var(--bad)' : 'var(--muted)';
 
+  // One dot per stored run, and its fill alone said which integrity state
+  // that run recorded — a channel that disappears the moment colour does,
+  // with no second cue anywhere in the plot. The shape says it too: a filled
+  // circle for DIRECT, a diamond for DERIVATIVE, a square for NO-MARKET.
+  // Colour stays, as a scanning aid, and the key below draws the shapes.
+  //
+  // An unrecognised state draws the DIRECT circle: it is the neutral shape,
+  // and a state the engine has not defined here must not be dressed as one
+  // of the three that exist.
+  const dotMark = (integrity, cx, cy, r, attrs, title) => {
+    const fill = dotFill(integrity);
+    const tip = title ? `<title>${title}</title>` : '';
+    if (integrity === 'DERIVATIVE')
+      return `<rect x="${(cx - r).toFixed(1)}" y="${(cy - r).toFixed(1)}" width="${(r * 2).toFixed(1)}" height="${(r * 2).toFixed(1)}"
+        transform="rotate(45 ${cx.toFixed(1)} ${cy.toFixed(1)})" fill="${fill}" ${attrs}>${tip}</rect>`;
+    if (integrity === 'NO-MARKET')
+      return `<rect x="${(cx - r).toFixed(1)}" y="${(cy - r).toFixed(1)}" width="${(r * 2).toFixed(1)}" height="${(r * 2).toFixed(1)}"
+        fill="${fill}" ${attrs}>${tip}</rect>`;
+    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}"
+       fill="${fill}" ${attrs}>${tip}</circle>`;
+  };
+
+  // The same mark at key size, wrapped in its own 12x12 box so the key can
+  // sit in a line of text. Hidden from assistive tech: the word beside it
+  // already names the state.
+  const keySwatch = (integrity) =>
+    `<svg class="sw" viewBox="0 0 12 12" aria-hidden="true">${dotMark(integrity, 6, 6, 4, 'class="key-mark"', '')}</svg>`;
+
   const segments = [];
   for (let i = 1; i < pts.length; i++) {
     const a = pts[i - 1], b = pts[i];
@@ -994,9 +1081,8 @@ function trendChart(d, size) {
       `reference mid ${esc(ref.mid || 'n/a')} via ${esc(ref.scored_against || ref.source || 'unknown')}`,
       `integrity ${esc(r.integrity)}${(r.depends_on || []).length ? ' via ' + esc(r.depends_on.join(', ')) : ''}`,
     ].join('<br/>');
-    return `<circle cx="${sx(p.t).toFixed(1)}" cy="${sy(p.loss).toFixed(1)}" r="3.5"
-       fill="${dotFill(r.integrity)}" stroke="var(--panel)" stroke-width="1.25">
-       <title>${title}</title></circle>`;
+    return dotMark(r.integrity, sx(p.t), sy(p.loss), 3.5,
+      `class="run-mark" stroke="var(--panel)" stroke-width="1.25"`, title);
   }).join('');
 
   const empty = priced.length
@@ -1038,10 +1124,13 @@ function trendChart(d, size) {
       text-anchor="middle">${esc(withTime ? fmtRunTime(t) : fmtRunDay(t))}</text>`;
   const ticks = span === 0 ? tick(t0) : [t0, (t0 + t1) / 2, t1].map(tick).join('');
 
-  const legend = `<div class="trend-legend">
-      <span><span class="sw" style="background:var(--muted)"></span>DIRECT</span>
-      <span><span class="sw" style="background:var(--warn)"></span>DERIVATIVE</span>
-      <span><span class="sw" style="background:var(--bad)"></span>NO-MARKET</span>
+  // The key draws the three marks at key size, so it explains the shape the
+  // plot uses rather than a colour the plot also carries. A colour key would
+  // have left the shapes unexplained and the dots unexplained without it.
+  const legend = `<div class="trend-legend" role="group" aria-label="Integrity state key">
+      <span>${keySwatch('DIRECT')}DIRECT</span>
+      <span>${keySwatch('DERIVATIVE')}DERIVATIVE</span>
+      <span>${keySwatch('NO-MARKET')}NO-MARKET</span>
     </div>`;
 
   return `<svg viewBox="0 0 ${W} ${H}" role="img"
