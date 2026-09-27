@@ -1295,6 +1295,10 @@ On-chain assets, pathfinding, order books, anchors, SEP-1 and SEP-38 — with no
 claim of exclusivity the repository cannot support.
 `V1` `area:docs` `difficulty:medium` `ready`
 
+> **Implemented.** [docs/why-stellar-native.md](why-stellar-native.md) landed (2026-09-27),
+> with every claim checked against the tree at `c45bbbc` and linked from the README's
+> shared-contracts section, [docs/about.md](about.md), and [docs/first-15-minutes.md](first-15-minutes.md).
+
 **#194 — "How Wayfare works" for a non-engineer** *(filed: [#254](https://github.com/Wayfare-labs/wayfare/issues/254))*
 Reference rate → market data → executable quote → comparison → checks → verdict,
 in prose a policy reader can follow.

@@ -80,6 +80,7 @@ optional enrichment. Without it the engine can rank, but it cannot tell a good
 deal from a disaster.
 
 The full argument, with the measurements behind it: **[docs/why-wayfare.md](docs/why-wayfare.md)**.
+Why Stellar-native and what the code uses: **[docs/why-stellar-native.md](docs/why-stellar-native.md)**.
 
 ---
 
@@ -225,6 +226,10 @@ A glossary of every state a reader can meet: **[docs/glossary.md](docs/glossary.
 New to the project and want the one-page story — what it measures, what it
 refuses to do, who it is for, and the non-custodial position stated once?
 **[docs/about.md](docs/about.md)**
+
+Why the monitor is Stellar-native, grounded in what the code uses (assets,
+pathfinding, order books, anchors, SEP-1, SEP-38) without unsupported exclusivity claims:
+**[docs/why-stellar-native.md](docs/why-stellar-native.md)**
 
 ### Verdict thresholds — breaking if altered
 
