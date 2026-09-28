@@ -1631,6 +1631,15 @@ The results region is a div soup assembled from template strings; headings,
 lists and tables are available and mostly unused.
 `V1` `area:ui` `difficulty:medium` `ready`
 
+> **Implemented.** `#out` is now `<main tabindex="-1">` with a skip link, and
+> every renderer emits named `<section>`s instead of bare panels; findings,
+> metrics and evidence are lists, the legend is a `<dl>`, table headers carry
+> `scope="col"`, the loading line is `role="status"`, and render moves focus
+> to the results. Unreadable dark-mode chips (raw brand tokens on DIRECT,
+> DERIVATIVE and the undetermined states) moved to the theme-aware
+> `--unknown`/`--warn` tokens. Pinned by `TestUISemanticHTMLPass`. No build
+> step; no API field was needed, so the data-contract rule never triggered.
+
 **#254 — A first-impression pass on the landing state** *(filed: [#309](https://github.com/Wayfare-labs/wayfare/issues/309))*
 Before a measurement runs the page is a heading, a select and a button. It
 should state what Wayfare is and what pressing the button will do.
