@@ -71,7 +71,7 @@ func TestUISemanticHTMLPass(t *testing.T) {
 		// Landmarks and keyboard reachability.
 		`<a class="skip-link" href="#out">Skip to results</a>`, // bypass the controls
 		`<main id="out" tabindex="-1">`,                        // results are a landmark and a focus target
-		`$('out').focus({ preventScroll: true });`,              // render moves focus to the results
+		`$('out').focus({ preventScroll: true });`,             // render moves focus to the results
 		// Sections carry headings and accessible names; no bare panel divs
 		// are produced by the renderers.
 		`<section class="panel" aria-label="Corridor integrity and verdict">`,
