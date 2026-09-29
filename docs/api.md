@@ -16,7 +16,7 @@ All endpoints are read-only. The service does not hold funds, issue tokens, sign
 | `GET` | `/healthz` | Return service health |
 | `GET` | `/` | Serve the embedded single-file UI |
 
-Unsupported methods return `405`. JSON errors have the shape `{ "error": "..." }`.
+Unsupported methods return `405`. Requests beyond the per-client rate limit return `429` with a `Retry-After` header (seconds) and the error code `rate_limited` (see [Rate limiting](#rate-limiting)). JSON errors have the shape `{ "error": "...", "code": "..." }`.
 
 ## `GET /api/corridor`
 
@@ -391,6 +391,35 @@ not be made, not that data is absent. The freshness block does not change the
 endpoint's health verdict: it remains `200` as long as the HTTP service is
 answering.
 
+## Rate limiting
+
+Every route — including `/healthz` and the UI — passes through a per-client
+limiter, because the thing being bounded is the service's cost (upstream
+calls, CPU), and that cost is real on every path.
+
+- **Sustained rate:** 4 requests/second per client (`-rate-limit`)
+- **Burst:** 10 requests (`-rate-burst`)
+- **Client identity:** the connecting peer's host, or the client named in
+  `X-Forwarded-For` when the request arrives from loopback or a private-range
+  address (the reverse-proxy shape of the hosted deployment). A directly
+  connected public peer cannot choose its own bucket by setting that header.
+- **Off switch:** `-rate-limit=0` disables limiting entirely — for an
+  operator who already has a limiter in front.
+
+A refused request answers:
+
+```
+HTTP/1.1 429 Too Many Requests
+Retry-After: 1
+
+{"error": "rate limit exceeded; ...", "code": "rate_limited"}
+```
+
+`Retry-After` is rounded up to whole seconds so a client that honours it is
+never refused twice for the same bucket. The limit is a fairness mechanism,
+not a security boundary: it bounds what one client can cost, and does not
+authenticate anyone.
+
 ## Freshness and provenance
 
 `live` is not a verdict. It describes where the response came from. A response with `live: false` is historical, and its `stale` envelope is authoritative for age. Consumers must not infer freshness from deployment time, request time, or the absence of an error.
@@ -399,6 +428,8 @@ Reference rates are never averaged. The response identifies the provider and, wh
 
 ## Related contracts
 
+- [Reading the API correctly](api-consumer.md) — a worked consumer that
+  respects `live`, `scored` and a null `recommended`, with its offline tests
 - [Run store](run-store.md) — stored record and hash-chain format
 - [Snapshot format](snapshot-format.md) — recorded upstream bytes
 - [Checks](checks.md) — tri-state counterparty findings and metrics

@@ -53,6 +53,15 @@ type Server struct {
 	// Timeout bounds a single corridor measurement. A full ladder is a
 	// dozen round trips to Horizon, so this is generous by HTTP standards.
 	Timeout time.Duration
+
+	// Limiter bounds what each client can cost the service (issue #320). A
+	// live measurement is a dozen Horizon round trips, more with sizes=, and
+	// the free deployment has no platform rate limiting in front of it. Nil
+	// disables limiting, which keeps the zero-value Server's behaviour
+	// unchanged; wayfared installs one by default and -rate-limit=0 removes
+	// it. Tests that hammer one endpoint build their own Server or call
+	// NewRateLimiter with a disabled configuration.
+	Limiter *RateLimiter
 }
 
 // pkgLogger is the package-level logger for request and upstream logging.
@@ -77,6 +86,12 @@ func (s *Server) timeout() time.Duration {
 }
 
 // Handler returns the routed handler for the whole service.
+//
+// The limiter wraps every route, including /healthz: a deployment probe and
+// a browser page load are both requests a client chose to make, and the
+// free instance's cost is upstream calls plus CPU regardless of path. CORS
+// stays outermost so a rate-limited response still carries the origin
+// policy and remains readable to a browser client.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/corridor", s.handleCorridor)
@@ -85,7 +100,17 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/assets", s.handleAssets)
 	mux.HandleFunc("/healthz", s.handleHealth)
 	mux.Handle("/", uiHandler())
-	return withCORS(mux)
+	return withCORS(s.limit(mux))
+}
+
+// limit applies the configured rate limiter, or passes through unchanged
+// when none is set. The nil case is the zero-value Server: every existing
+// constructor that does not mention limiting keeps its old behaviour.
+func (s *Server) limit(next http.Handler) http.Handler {
+	if s.Limiter == nil {
+		return next
+	}
+	return s.Limiter.middleware(next)
 }
 
 // withCORS makes the API callable from any origin, and records the policy
@@ -487,6 +512,7 @@ const (
 	codeInvalidLimit        = "invalid_limit"
 	codeStoreRead           = "store_read_error"
 	codeDivergenceHistory   = "divergence_history_error"
+	codeRateLimited         = "rate_limited"
 )
 
 // checkParams rejects any query parameter outside the endpoint's allow-list.

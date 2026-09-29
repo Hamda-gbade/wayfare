@@ -59,6 +59,14 @@ func main() {
 			"staleness ceiling for -check-fresh; default is two missed sweeps")
 		histFirst = flag.Bool("history-first", false,
 			"serve the stored run instead of measuring, unless a request asks for ?live=1")
+		// Per-client request bounds (issue #320). A live measurement is a
+		// dozen Horizon round trips and the free deployment has nothing in
+		// front of it, so a default is set rather than left open. Zero
+		// disables limiting for an operator who has their own proxy in front.
+		rateLimit = flag.Float64("rate-limit", defaultRateLimit,
+			"per-client requests per second; 0 disables rate limiting")
+		rateBurst = flag.Int("rate-burst", defaultRateBurst,
+			"per-client instantaneous request allowance")
 		logLevel = flag.String("log-level", envOr("WAYFARE_LOG_LEVEL", "info"), "debug, info, warn or error")
 	)
 	flag.Parse()
@@ -187,6 +195,10 @@ func main() {
 			Timeout:      *timeout,
 			HistoryFirst: *histFirst,
 			Checks:       &checks.Runner{HorizonURL: *horizon},
+			// Nil when limiting is disabled (rate 0 or burst 0): the field is
+			// optional on Server, and a disabled limiter should be absent
+			// rather than present and inert.
+			Limiter: server.NewRateLimiter(*rateLimit, *rateBurst),
 		}
 		httpSrv := &http.Server{
 			Addr:              *addr,

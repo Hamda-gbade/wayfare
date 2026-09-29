@@ -347,5 +347,6 @@ a backup nobody has restored from is a hypothesis. See
 
 ## Related
 
+- [rollback.md](rollback.md) — returning to an older image, and verifying the chain it serves
 - [snapshot-format.md](snapshot-format.md) — recorded upstream bytes
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — project invariants
