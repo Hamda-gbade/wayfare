@@ -9,10 +9,10 @@ model add anything a reader can use that the deterministic measurements do
 not already provide?* — not a safety question; the safety question is already
 worked in
 [spike-wrong-prediction-failure-modes.md](spike-wrong-prediction-failure-modes.md)
-(#144 / [#205](https://github.com/Wayfare-labs/wayfare/issues/205)), and the
+(`#144` / [#205](https://github.com/Wayfare-labs/wayfare/issues/205)), and the
 publishable-shape question in
 [measurement-inference-boundary.md](measurement-inference-boundary.md)
-(#147 / [#208](https://github.com/Wayfare-labs/wayfare/issues/208)).
+(`#147` / [#208](https://github.com/Wayfare-labs/wayfare/issues/208)).
 
 ## The question, and why a negative answer is worth writing down
 
@@ -51,7 +51,7 @@ Two facts about this surface matter for the question:
    have no non-test caller at `c44c55b`. So `spread.bid-ask`, `depth.*`,
    `price-impact.size`, `concentration.liquidity` and
    `deviation.book-vs-reference` are implemented and tested but not published
-   (see backlog #49 / [#91](https://github.com/Wayfare-labs/wayfare/issues/91)).
+   (see backlog `#49` / [#91](https://github.com/Wayfare-labs/wayfare/issues/91)).
    This weakens a model's case rather than strengthening it: the deterministic
    capability that *could* answer more is not yet switched on.
 2. **The tree contains no predictive code of any kind.** A case-insensitive
@@ -84,7 +84,7 @@ measurement would succeed.
   boolean per rung, but the tree goes out of its way to keep *no market*, *too
   large for the pool*, and *request never landed* distinct. A probability needs
   a single binary target; the data deliberately refuses to collapse those into
-  one. That definitional question is open as backlog #141
+  one. That definitional question is open as backlog `#141`
   ([#339](https://github.com/Wayfare-labs/wayfare/issues/339)) and this spike
   does not resolve it.
 - **No labelled history.** `data/*.ndjson` holds one record per corridor
@@ -121,14 +121,14 @@ measured depth is 1.8 %"*.
 size, it is interpolation or extrapolation — which this project explicitly
 forbids publishing:
 
-- Backlog #76 / [#166](https://github.com/Wayfare-labs/wayfare/issues/166):
+- Backlog `#76` / [#166](https://github.com/Wayfare-labs/wayfare/issues/166):
   *"Never interpolate between measured rungs — the curve has holes where rungs
   did not price; a drawn line between two measured points is an inference and
   must be labelled as one."*
 - The curve already preserves unpriced rungs as holes and asserts **no**
   monotonicity (`ExecutionRateCurve.NonMonotonic`; `route/ladder.go`,
   `buildCurve`).
-- The design finding for #147 restates it for exactly this case:
+- The design finding for `#147` restates it for exactly this case:
   *"Blending inference into the loss curve"* is rejected because inference
   between measured points is the interpolation the project forbids
   (`measurement-inference-boundary.md` §8).
@@ -152,7 +152,7 @@ the most careful treatment, and it is where the honest answer is not a flat no.
 - Longitudinal divergence statistics for the benchmark itself, already
   published (`server/trend.go`, `DivergenceStatsJSON`).
 - Integrity-state change tracking is a named V3 item and the chain already
-  stores the states (backlog #122 / [#193](https://github.com/Wayfare-labs/wayfare/issues/193)).
+  stores the states (backlog `#122` / [#193](https://github.com/Wayfare-labs/wayfare/issues/193)).
 
 **The genuine, small gap.** There is no per-observation "this value is unusual
 for this corridor" test and no defined baseline of normal. A statistical
@@ -161,7 +161,7 @@ distance from a baseline is something the deterministic layer does not compute.
 **Why that gap does not argue for a model — yet.**
 
 - The baseline itself is undefined and is an open research question, not a
-  modelling question (backlog #138 / [#336](https://github.com/Wayfare-labs/wayfare/issues/336),
+  modelling question (backlog `#138` / [#336](https://github.com/Wayfare-labs/wayfare/issues/336),
   "what a corridor 'baseline of normal' would require").
 - It is gated on history that does not exist: one record per corridor at
   `c44c55b`. With one observation there is no distribution to be unusual
@@ -275,21 +275,21 @@ issue's first constraint asks that claims be checked against the code as it is.
 | Tree at `c44c55b`: `analysis/analysis.go` (`MinSampleSizeForMeanStdDev` = 30, `MinSampleSizeForTrend` = 60; trend is least-squares over observation index), `analysis/divergence.go`, `server/trend.go` (`DivergenceHistory` at line 295) | 2026-09-29 |
 | Tree at `c44c55b`: `refrate/cross.go` (MALFUNCTION), `refrate/refrate.go:74` (`Scorable`) | 2026-09-29 |
 | `data/USDC-NGNC.ndjson`, `data/USDC-GHSC.ndjson`, `data/USDC-KESC.ndjson` — one record each, recorded 2026-08-22 | 2026-09-29 |
-| `docs/backlog.md` — Architecture snapshot ("What does not exist", the V1–V6 table), E2 preamble, entry #146 ("would a model add anything…"), entries #76, #122, #138, #141 | 2026-09-29 |
+| `docs/backlog.md` — Architecture snapshot ("What does not exist", the V1–V6 table), E2 preamble, entry `#146` ("would a model add anything…"), entries `#76`, `#122`, `#138`, `#141` | 2026-09-29 |
 | [ADR 003](adr/003-why-layers-3-and-4-have-no-packages.md) — why layers 3 and 4 have no packages | 2026-09-29 |
-| [spike-wrong-prediction-failure-modes.md](spike-wrong-prediction-failure-modes.md) (#144 / #205) — F1–F8, design implication 6 (the held-out negative) | 2026-09-29 |
-| [measurement-inference-boundary.md](measurement-inference-boundary.md) (#147 / #208) — §4 candidate list, §8 rejected approaches | 2026-09-29 |
-| [spike-90-day-history.md](spike-90-day-history.md) (#135 / #333) — what the projected sample can and cannot support | 2026-09-29 |
-| [spike-cost-of-being-wrong.md](spike-cost-of-being-wrong.md) (#164 / #224) — the publication risk register | 2026-09-29 |
+| [spike-wrong-prediction-failure-modes.md](spike-wrong-prediction-failure-modes.md) (`#144` / `#205`) — F1–F8, design implication 6 (the held-out negative) | 2026-09-29 |
+| [measurement-inference-boundary.md](measurement-inference-boundary.md) (`#147` / `#208`) — §4 candidate list, §8 rejected approaches | 2026-09-29 |
+| [spike-90-day-history.md](spike-90-day-history.md) (`#135` / `#333`) — what the projected sample can and cannot support | 2026-09-29 |
+| [spike-cost-of-being-wrong.md](spike-cost-of-being-wrong.md) (`#164` / `#224`) — the publication risk register | 2026-09-29 |
 | [non-goals.md](non-goals.md) §8 "Not yet: prediction and attestation — blocked on evidence, not appetite"; [about.md](about.md) ("It does not predict"); `route/cost_test.go:22` (expected failure cost is a layer-3 quantity) | 2026-09-29 |
 
 ## Related
 
 - [#207](https://github.com/Wayfare-labs/wayfare/issues/207) — this spike
 - [spike-wrong-prediction-failure-modes.md](spike-wrong-prediction-failure-modes.md) — what a wrong
-  prediction costs a reader (#205); the safety half of this value question
+  prediction costs a reader [#205](https://github.com/Wayfare-labs/wayfare/issues/205); the safety half of this value question
 - [measurement-inference-boundary.md](measurement-inference-boundary.md) — how inference would have to be
-  marked if it were ever published (#208)
+  marked if it were ever published [#208](https://github.com/Wayfare-labs/wayfare/issues/208)
 - [#339](https://github.com/Wayfare-labs/wayfare/issues/339) — what a route failure actually is,
   observationally: the definitional prerequisite this spike found missing
 - [#340](https://github.com/Wayfare-labs/wayfare/issues/340) — what would make a prediction publishable
